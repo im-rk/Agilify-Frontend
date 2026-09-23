@@ -1,141 +1,165 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '../api';
-import { Folder, Plus, X, Loader2 } from 'lucide-react';
+import { Folder, Plus, Zap } from 'lucide-react';
+import { useCreateProject, useProjects } from '@/hooks/useProjects';
+import { UserMenu } from '@/components/layout/UserMenu';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
-const ProjectsPage = () => {
-  const [projects, setProjects] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+export default function ProjectsPage() {
   const navigate = useNavigate();
+  const { data: projects, isLoading } = useProjects();
 
-  // Modal state
+  return (
+    <div className="flex min-h-screen flex-col">
+      <header className="flex h-14 shrink-0 items-center justify-between border-b border-border px-8">
+        <div className="flex items-center gap-2">
+          <div className="flex size-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
+            <Zap className="size-3.5" strokeWidth={2.5} />
+          </div>
+          <span className="font-display text-[15px] font-semibold tracking-tight">Agilify</span>
+        </div>
+        <UserMenu />
+      </header>
+
+      <main className="mx-auto w-full max-w-5xl flex-1 px-8 py-12">
+        <div className="mb-10 flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight">Projects</h1>
+            <p className="mt-1 text-sm text-muted-foreground">Pick a workspace, or start a new one.</p>
+          </div>
+          <CreateProjectDialog />
+        </div>
+
+        {isLoading ? (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton key={i} className="h-32 rounded-xl" />
+            ))}
+          </div>
+        ) : !projects?.length ? (
+          <EmptyState />
+        ) : (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {projects.map((p) => (
+              <Card
+                key={p.id}
+                onClick={() => navigate(`/projects/${p.key}/dashboard`)}
+                className="cursor-pointer gap-3 rounded-xl border-border p-5 transition-colors hover:border-muted-foreground/40"
+              >
+                <div className="flex items-start justify-between">
+                  <h3 className="font-medium leading-tight">{p.name}</h3>
+                  <Badge variant="secondary" className="font-mono text-[11px]">
+                    {p.key}
+                  </Badge>
+                </div>
+                <p className="line-clamp-2 text-sm text-muted-foreground">
+                  {p.description || 'No description provided.'}
+                </p>
+                <div className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <span
+                    className={`size-1.5 rounded-full ${p.status === 'ACTIVE' ? 'bg-primary' : 'bg-muted-foreground'}`}
+                  />
+                  {p.status}
+                </div>
+              </Card>
+            ))}
+          </div>
+        )}
+      </main>
+    </div>
+  );
+}
+
+function EmptyState() {
+  return (
+    <Card className="items-center rounded-xl border-dashed border-border p-16 text-center">
+      <div className="mb-4 flex size-12 items-center justify-center rounded-full bg-muted">
+        <Folder className="size-5 text-muted-foreground" />
+      </div>
+      <h3 className="font-medium">No projects yet</h3>
+      <p className="mt-1 text-sm text-muted-foreground">Create your first project to get started.</p>
+    </Card>
+  );
+}
+
+function CreateProjectDialog() {
+  const [open, setOpen] = useState(false);
   const [name, setName] = useState('');
   const [key, setKey] = useState('');
   const [description, setDescription] = useState('');
-  const [modalLoading, setModalLoading] = useState(false);
-  const [error, setError] = useState('');
+  const createProject = useCreateProject();
 
-  const fetchProjects = async () => {
-    try {
-      const res = await api.get('/projects');
-      setProjects(res.data.data || []);
-    } catch (err) {
-      console.error("Failed to fetch projects", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchProjects();
-  }, []);
-
-  const handleCreateProject = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    setModalLoading(true);
-    try {
-      const res = await api.post('/projects', { name, key: key.toUpperCase(), description });
-      setProjects([...projects, res.data.data]);
-      setIsModalOpen(false);
-      setName('');
-      setKey('');
-      setDescription('');
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to create project');
-    } finally {
-      setModalLoading(false);
-    }
+    await createProject.mutateAsync({ name, key: key.toUpperCase(), description: description || undefined });
+    setOpen(false);
+    setName('');
+    setKey('');
+    setDescription('');
   };
-
-  if (loading) {
-    return <div style={{ display: 'flex', justifyContent: 'center', marginTop: '4rem' }}><Loader2 className="animate-spin" size={32} /></div>;
-  }
 
   return (
-    <div className="animate-fade-in">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <div>
-          <h1 style={{ fontSize: '2rem' }}>Projects</h1>
-          <p style={{ color: 'var(--text-muted)' }}>Manage your workspaces and teams.</p>
-        </div>
-        <button className="btn btn-primary" onClick={() => setIsModalOpen(true)}>
-          <Plus size={18} />
-          New Project
-        </button>
-      </div>
-
-      {projects.length === 0 ? (
-        <div className="glass-card" style={{ padding: '4rem', textAlign: 'center' }}>
-          <div style={{ display: 'inline-flex', background: 'var(--bg-input)', padding: '1rem', borderRadius: '50%', marginBottom: '1rem' }}>
-            <Folder size={32} color="var(--text-muted)" />
-          </div>
-          <h3>No projects yet</h3>
-          <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem', marginTop: '0.5rem' }}>Create your first project to get started.</p>
-          <button className="btn btn-primary" onClick={() => setIsModalOpen(true)}>Create Project</button>
-        </div>
-      ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.5rem' }}>
-          {projects.map((p) => (
-            <div 
-              key={p.id} 
-              className="glass-card" 
-              style={{ padding: '1.5rem', cursor: 'pointer', transition: 'var(--transition)' }}
-              onClick={() => navigate(`/projects/${p.key}`)}
-              onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.borderColor = 'var(--primary)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = 'var(--border-color)'; }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
-                <h3 style={{ fontSize: '1.25rem' }}>{p.name}</h3>
-                <span style={{ fontSize: '0.75rem', background: 'var(--bg-input)', padding: '0.25rem 0.5rem', borderRadius: 'var(--radius-sm)', fontWeight: 600 }}>{p.key}</span>
-              </div>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                {p.description || 'No description provided.'}
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="sm">
+          <Plus />
+          New project
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-md">
+        <form onSubmit={handleSubmit}>
+          <DialogHeader>
+            <DialogTitle>Create project</DialogTitle>
+            <DialogDescription>A short key (e.g. FOOD) prefixes every issue in this project.</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-1.5">
+              <Label htmlFor="name">Name</Label>
+              <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required autoFocus />
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="key">Key</Label>
+              <Input
+                id="key"
+                value={key}
+                onChange={(e) => setKey(e.target.value.toUpperCase())}
+                pattern="^[A-Z]{2,10}$"
+                placeholder="FOOD"
+                className="font-mono uppercase"
+                required
+              />
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="description">Description</Label>
+              <Input id="description" value={description} onChange={(e) => setDescription(e.target.value)} />
+            </div>
+            {createProject.isError && (
+              <p className="text-sm text-destructive">
+                {createProject.error?.response?.data?.message || 'Failed to create project.'}
               </p>
-              <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                Status: <span style={{ color: p.status === 'ACTIVE' ? 'var(--secondary)' : 'var(--text-muted)' }}>{p.status}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Modal Overlay */}
-      {isModalOpen && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 100 }}>
-          <div className="glass-card animate-fade-in" style={{ width: '100%', maxWidth: '500px', padding: '2rem', background: 'var(--bg-main)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <h2 style={{ fontSize: '1.5rem' }}>Create New Project</h2>
-              <button onClick={() => setIsModalOpen(false)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}><X size={24} /></button>
-            </div>
-            
-            {error && <div className="text-error" style={{ background: 'rgba(239, 68, 68, 0.1)', padding: '0.75rem', borderRadius: 'var(--radius-sm)', marginBottom: '1rem' }}>{error}</div>}
-            
-            <form onSubmit={handleCreateProject}>
-              <div className="input-group">
-                <label className="input-label">Project Name</label>
-                <input className="input-field" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Website Redesign" required />
-              </div>
-              <div className="input-group">
-                <label className="input-label">Project Key (2-10 Uppercase Letters)</label>
-                <input className="input-field" value={key} onChange={(e) => setKey(e.target.value.toUpperCase())} placeholder="e.g. WEB" pattern="^[A-Z]{2,10}$" required />
-              </div>
-              <div className="input-group">
-                <label className="input-label">Description (Optional)</label>
-                <textarea className="input-field" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="What is this project about?" rows={3} style={{ resize: 'vertical' }} />
-              </div>
-              
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2rem' }}>
-                <button type="button" className="btn btn-secondary" onClick={() => setIsModalOpen(false)}>Cancel</button>
-                <button type="submit" className="btn btn-primary" disabled={modalLoading}>{modalLoading ? 'Creating...' : 'Create Project'}</button>
-              </div>
-            </form>
+            )}
           </div>
-        </div>
-      )}
-    </div>
+          <DialogFooter>
+            <Button type="submit" disabled={createProject.isPending}>
+              {createProject.isPending ? 'Creating…' : 'Create project'}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
-};
-
-export default ProjectsPage;
+}

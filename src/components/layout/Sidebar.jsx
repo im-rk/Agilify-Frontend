@@ -5,8 +5,8 @@ import { cn } from 'cn';
 const NAV_ITEMS = [
   { to: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { to: 'board', label: 'Board', icon: KanbanSquare },
-  { to: 'backlog', label: 'Backlog', icon: ListTodo, disabled: true },
-  { to: 'sprints', label: 'Sprints', icon: Rocket, disabled: true },
+  { to: 'backlog', label: 'Backlog', icon: ListTodo },
+  { to: 'sprints', label: 'Sprints', icon: Rocket },
   { to: 'docs', label: 'Docs', icon: FileText, disabled: true },
 ];
 

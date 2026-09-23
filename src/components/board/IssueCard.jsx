@@ -1,3 +1,4 @@
+import { useParams, Link } from 'react-router-dom';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Bug, BookOpen, CheckSquare, Layers } from 'lucide-react';
@@ -12,6 +13,7 @@ const TYPE_ICON = {
 };
 
 export function IssueCard({ issue }) {
+  const { key } = useParams();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: issue.id,
   });
@@ -30,7 +32,9 @@ export function IssueCard({ issue }) {
         isDragging && 'opacity-40',
       )}
     >
-      <p className="text-sm leading-snug">{issue.title}</p>
+      <Link to={`/projects/${key}/issues/${issue.id}`} className="text-sm leading-snug hover:underline">
+        {issue.title}
+      </Link>
       <div className="flex items-center justify-between">
         <span className="flex items-center gap-1 font-mono text-[11px] text-muted-foreground">
           <TypeIcon className={cn('size-3.5', type.className)} />

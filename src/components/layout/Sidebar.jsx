@@ -1,5 +1,5 @@
 import { NavLink, useParams } from 'react-router-dom';
-import { LayoutDashboard, KanbanSquare, ListTodo, Rocket, FileText, Zap } from 'lucide-react';
+import { LayoutDashboard, KanbanSquare, ListTodo, Rocket, FileText, Users, Zap } from 'lucide-react';
 import { cn } from 'cn';
 
 const NAV_ITEMS = [
@@ -7,7 +7,8 @@ const NAV_ITEMS = [
   { to: 'board', label: 'Board', icon: KanbanSquare },
   { to: 'backlog', label: 'Backlog', icon: ListTodo },
   { to: 'sprints', label: 'Sprints', icon: Rocket },
-  { to: 'docs', label: 'Docs', icon: FileText, disabled: true },
+  { to: 'docs', label: 'Docs', icon: FileText },
+  { to: 'settings/members', label: 'Members', icon: Users },
 ];
 
 export function Sidebar() {

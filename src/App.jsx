@@ -6,6 +6,9 @@ import BoardPage from '@/pages/BoardPage';
 import BacklogPage from '@/pages/BacklogPage';
 import SprintsPage from '@/pages/SprintsPage';
 import IssueDetailPage from '@/pages/IssueDetailPage';
+import DocsPage from '@/pages/DocsPage';
+import DocEditorPage from '@/pages/DocEditorPage';
+import MembersPage from '@/pages/MembersPage';
 
 // No /login or /register — Keycloak owns authentication entirely (see main.jsx).
 function App() {
@@ -21,6 +24,9 @@ function App() {
         <Route path="backlog" element={<BacklogPage />} />
         <Route path="sprints" element={<SprintsPage />} />
         <Route path="issues/:issueId" element={<IssueDetailPage />} />
+        <Route path="docs" element={<DocsPage />} />
+        <Route path="docs/:docId" element={<DocEditorPage />} />
+        <Route path="settings/members" element={<MembersPage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/projects" replace />} />

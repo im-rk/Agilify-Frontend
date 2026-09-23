@@ -3,6 +3,7 @@ import { ChevronsUpDown, Check } from 'lucide-react';
 import { useProjects } from '@/hooks/useProjects';
 import { Button } from '@/components/ui/button';
 import { UserMenu } from './UserMenu';
+import { NotificationBell } from './NotificationBell';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -45,7 +46,10 @@ export function Header() {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <UserMenu />
+      <div className="flex items-center gap-1">
+        <NotificationBell />
+        <UserMenu />
+      </div>
     </header>
   );
 }

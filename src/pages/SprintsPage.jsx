@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { format } from 'date-fns';
-import { Plus, Rocket } from 'lucide-react';
-import { useCompleteSprint, useCreateSprint, useSprints, useStartSprint } from '@/hooks/useSprints';
+import { Plus, Rocket, Trash2 } from 'lucide-react';
+import { useCompleteSprint, useCreateSprint, useDeleteSprint, useSprints, useStartSprint } from '@/hooks/useSprints';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -30,6 +30,7 @@ export default function SprintsPage() {
   const { key } = useParams();
   const { data: sprints, isLoading } = useSprints(key);
   const startSprint = useStartSprint(key);
+  const deleteSprint = useDeleteSprint(key);
 
   return (
     <div className="flex flex-col gap-6">
@@ -69,9 +70,19 @@ export default function SprintsPage() {
               </p>
               <div className="mt-1 flex gap-2">
                 {sprint.status === 'PLANNED' && (
-                  <Button size="sm" variant="secondary" onClick={() => startSprint.mutate(sprint.id)}>
-                    Start sprint
-                  </Button>
+                  <>
+                    <Button size="sm" variant="secondary" onClick={() => startSprint.mutate(sprint.id)}>
+                      Start sprint
+                    </Button>
+                    <Button
+                      size="icon-sm"
+                      variant="ghost"
+                      className="text-muted-foreground hover:text-destructive"
+                      onClick={() => deleteSprint.mutate(sprint.id)}
+                    >
+                      <Trash2 className="size-3.5" />
+                    </Button>
+                  </>
                 )}
                 {sprint.status === 'ACTIVE' && <CompleteSprintDialog projectKey={key} sprint={sprint} sprints={sprints} />}
               </div>

@@ -1,31 +1,31 @@
 import axios from 'axios';
+import keycloak from '@/lib/keycloak';
 
 const api = axios.create({
-  baseURL: 'http://localhost:8081/api/v1',
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8082/api/v1',
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Request Interceptor: Attach token if it exists
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('agilify_token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+// Refresh the token (if it's within 30s of expiring) before every request,
+// then attach it — avoids sending a request with an already-dead token.
+api.interceptors.request.use(async (config) => {
+  try {
+    await keycloak.updateToken(30);
+  } catch {
+    keycloak.login();
+    return Promise.reject(new Error('Session expired, redirecting to login'));
   }
+  config.headers.Authorization = `Bearer ${keycloak.token}`;
   return config;
-}, (error) => {
-  return Promise.reject(error);
 });
 
-// Response Interceptor: Handle 401s (Unauthorized)
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response && error.response.status === 401) {
-      localStorage.removeItem('agilify_token');
-      localStorage.removeItem('agilify_user');
-      window.location.href = '/login';
+    if (error.response?.status === 401) {
+      keycloak.login();
     }
     return Promise.reject(error);
   }

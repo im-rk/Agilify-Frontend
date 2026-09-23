@@ -5,6 +5,7 @@ import { useAssignIssueToSprint } from '@/hooks/useIssues';
 import { useSprints } from '@/hooks/useSprints';
 import { CreateIssueDialog } from '@/components/issue/CreateIssueDialog';
 import { PriorityBadge } from '@/components/issue/PriorityBadge';
+import { AssigneeAvatar } from '@/components/issue/AssigneeAvatar';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -65,6 +66,7 @@ function BacklogRow({ issue, projectKey, sprints }) {
         {issue.title}
       </Link>
       <PriorityBadge priority={issue.priority} />
+      <AssigneeAvatar name={issue.assigneeName} />
       <Select onValueChange={(sprintId) => assignToSprint.mutate(sprintId)}>
         <SelectTrigger size="sm" className="h-7 w-40 text-xs">
           <SelectValue placeholder="Move to sprint…" />

@@ -3,6 +3,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Bug, BookOpen, CheckSquare, Layers } from 'lucide-react';
 import { PriorityBadge } from '@/components/issue/PriorityBadge';
+import { AssigneeAvatar } from '@/components/issue/AssigneeAvatar';
 import { cn } from 'cn';
 
 const TYPE_ICON = {
@@ -40,7 +41,10 @@ export function IssueCard({ issue }) {
           <TypeIcon className={cn('size-3.5', type.className)} />
           {issue.issueKey}
         </span>
-        <PriorityBadge priority={issue.priority} />
+        <div className="flex items-center gap-1.5">
+          <PriorityBadge priority={issue.priority} />
+          <AssigneeAvatar name={issue.assigneeName} size="size-5" />
+        </div>
       </div>
     </div>
   );

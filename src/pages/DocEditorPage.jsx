@@ -43,7 +43,7 @@ export default function DocEditorPage() {
             <span className={`size-1.5 rounded-full ${connected ? 'bg-emerald-400' : 'bg-destructive'}`} />
             {connected ? 'Live' : 'Disconnected'}
           </span>
-          <Button size="sm" variant="secondary" onClick={saveSnapshot}>
+          <Button size="sm" variant="secondary" onClick={saveSnapshot} disabled={!connected}>
             <Save className="size-3.5" />
             Save version
           </Button>
@@ -60,7 +60,8 @@ export default function DocEditorPage() {
       <Textarea
         value={text}
         onChange={(e) => setText(e.target.value)}
-        placeholder="Start writing — everyone with this doc open sees it live…"
+        readOnly={!connected}
+        placeholder={connected ? 'Start writing — everyone with this doc open sees it live…' : 'Not connected — editing is disabled (Developer role or higher is required to edit docs).'}
         className="min-h-[60vh] resize-none rounded-xl border-border p-6 text-sm leading-relaxed"
       />
     </div>

@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { FileText, Plus } from 'lucide-react';
+import { FileText, Plus, Trash2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import { useCreateDoc, useDocs } from '@/hooks/useDocs';
+import { useCreateDoc, useDeleteDoc, useDocs } from '@/hooks/useDocs';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -14,6 +14,7 @@ export default function DocsPage() {
   const { key } = useParams();
   const navigate = useNavigate();
   const { data: docs, isLoading } = useDocs(key);
+  const deleteDoc = useDeleteDoc(key);
 
   return (
     <div className="flex flex-col gap-6">
@@ -45,7 +46,20 @@ export default function DocsPage() {
               onClick={() => navigate(`/projects/${key}/docs/${doc.id}`)}
               className="cursor-pointer gap-2 rounded-xl border-border p-5 transition-colors hover:border-muted-foreground/40"
             >
-              <h3 className="font-medium leading-tight">{doc.title}</h3>
+              <div className="flex items-start justify-between gap-2">
+                <h3 className="font-medium leading-tight">{doc.title}</h3>
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
+                  className="text-muted-foreground hover:text-destructive"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (window.confirm(`Delete "${doc.title}"?`)) deleteDoc.mutate(doc.id);
+                  }}
+                >
+                  <Trash2 />
+                </Button>
+              </div>
               <p className="text-xs text-muted-foreground">
                 Edited {formatDistanceToNow(new Date(doc.updatedAt), { addSuffix: true })} · {doc.createdByName}
               </p>

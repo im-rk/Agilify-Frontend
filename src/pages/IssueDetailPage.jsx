@@ -58,15 +58,23 @@ export default function IssueDetailPage() {
   const isWatching = watchers?.some((w) => w.userId === user?.id);
   const isAdmin = members?.some((m) => m.userId === user?.id && m.role === 'ADMIN');
 
-  const saveDetails = () =>
-    updateIssue.mutate({
+  const saveDetails = () => {
+    const payload = {
       title,
       description: description || null,
       type: issue.type,
       priority: issue.priority,
       storyPoints: storyPoints === '' ? null : Number(storyPoints),
       dueDate: dueDate || null,
-    });
+    };
+    // blur fires even when nothing changed — skip the pointless PUT (and the 403 toast a read-only user would get)
+    const unchanged =
+      payload.title === issue.title &&
+      payload.description === (issue.description || null) &&
+      payload.storyPoints === (issue.storyPoints ?? null) &&
+      payload.dueDate === (issue.dueDate || null);
+    if (!unchanged && payload.title.trim()) updateIssue.mutate(payload);
+  };
 
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-6">

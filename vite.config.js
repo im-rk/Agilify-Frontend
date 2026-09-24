@@ -16,5 +16,7 @@ export default defineConfig({
     // Keycloak only allows http://localhost:5173/* as a redirect URI — if Vite silently moved to
     // 5174 because 5173 was busy, login would fail with "Invalid parameter: redirect_uri".
     strictPort: true,
+    // lets a friend open the dev server through a Tailscale MagicDNS name (see SHARE_WITH_A_FRIEND.md)
+    allowedHosts: ['.ts.net'],
   },
 })

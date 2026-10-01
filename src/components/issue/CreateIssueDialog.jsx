@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { Plus } from 'lucide-react';
-import { useCreateIssue } from '@/hooks/useIssues';
+import { useEffect, useState } from 'react';
+import { Plus, TriangleAlert } from 'lucide-react';
+import { useCreateIssue, useCheckDuplicates, useProjectIssues } from '@/hooks/useIssues';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -25,6 +25,29 @@ export function CreateIssueDialog({ projectKey }) {
   const [type, setType] = useState('TASK');
   const [priority, setPriority] = useState('P3');
   const createIssue = useCreateIssue(projectKey);
+  const checkDuplicates = useCheckDuplicates(projectKey);
+  const { data: existingIssues } = useProjectIssues(projectKey);
+  const [duplicates, setDuplicates] = useState([]);
+
+  // debounced semantic dedup check as the user types a title/description
+  useEffect(() => {
+    if (!open || title.trim().length < 6) {
+      setDuplicates([]);
+      return;
+    }
+    const timer = setTimeout(() => {
+      checkDuplicates.mutate(`${title}\n${description}`, {
+        onSuccess: (ids) => setDuplicates(ids),
+        onError: () => setDuplicates([]),
+      });
+    }, 500);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [title, description, open]);
+
+  const duplicateIssues = duplicates
+    .map((id) => existingIssues?.content?.find((i) => i.id === id))
+    .filter(Boolean);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -34,6 +57,7 @@ export function CreateIssueDialog({ projectKey }) {
     setDescription('');
     setType('TASK');
     setPriority('P3');
+    setDuplicates([]);
   };
 
   return (
@@ -58,6 +82,21 @@ export function CreateIssueDialog({ projectKey }) {
               <Label htmlFor="description">Description</Label>
               <Textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} rows={3} />
             </div>
+            {duplicateIssues.length > 0 && (
+              <div className="flex flex-col gap-1.5 rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-sm">
+                <div className="flex items-center gap-1.5 font-medium text-amber-500">
+                  <TriangleAlert className="size-4" />
+                  Looks similar to {duplicateIssues.length === 1 ? 'an existing issue' : 'existing issues'}
+                </div>
+                <ul className="list-disc pl-5 text-muted-foreground">
+                  {duplicateIssues.map((i) => (
+                    <li key={i.id}>
+                      {i.issueKey}: {i.title}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-1.5">
                 <Label>Type</Label>

@@ -30,6 +30,13 @@ export function useCreateIssue(key) {
   });
 }
 
+export function useCheckDuplicates(key) {
+  return useMutation({
+    mutationFn: async (draftText) =>
+      (await api.post(`/projects/${key}/issues/check-duplicates`, { draftText })).data,
+  });
+}
+
 function useIssueMutation(key, issueId, fn) {
   const queryClient = useQueryClient();
   return useMutation({

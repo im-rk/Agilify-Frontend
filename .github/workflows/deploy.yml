@@ -1,0 +1,65 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: deploy-frontend
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: ap-northeast-1
+  BUCKET: agilify-frontend-204810699146
+  INSTANCE_ID: i-07bb832ffc973f55f
+  PUBLIC_URL: https://35-73-249-109.sslip.io
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+        env:
+          VITE_API_BASE_URL: ${{ env.PUBLIC_URL }}/api/v1
+          VITE_KEYCLOAK_URL: ${{ env.PUBLIC_URL }}
+          VITE_WS_BASE_URL: wss://35-73-249-109.sslip.io
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist
+          retention-days: 3
+
+  deploy:
+    needs: build
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::204810699146:role/agilify-gha-frontend
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Upload to S3
+        run: aws s3 sync dist/ "s3://$BUCKET/" --delete --only-show-errors
+      - name: Pull the new build onto the server (SSM) and wait
+        run: |
+          ID=$(aws ssm send-command --instance-ids "$INSTANCE_ID" \
+            --document-name AWS-RunShellScript --timeout-seconds 120 \
+            --parameters "commands=[\"sudo -u ubuntu AWS_DEFAULT_REGION=$AWS_REGION aws s3 sync s3://$BUCKET/ /home/ubuntu/agilify/web/ --delete --only-show-errors\"]" \
+            --query Command.CommandId --output text)
+          aws ssm wait command-executed --command-id "$ID" --instance-id "$INSTANCE_ID"
